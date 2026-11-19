@@ -287,4 +287,4 @@ direct_race <- function(series, h = 12, r = 3) {
 
 direct_race("CPIAUCSL")
 
-
+#I don't know if the comment matters, but I'm fixing it anyway
