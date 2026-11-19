@@ -47,4 +47,33 @@ liquor_fit <- liquor |>
 liquor_fit |> select(arima) |> report()
 liquor_fit |> select(ets) |> report()
 
-gg_tsresiduals()
+liquor_fit |> select(arima) |> gg_tsresiduals()
+
+liquor_fit |>
+  select(arima) |>
+  augment() |>
+  features(.innov, ljung_box, lag = 24, dof = 6)
+
+liquor_cv <- liquor |>
+  stretch_tsibble(.init = 120, .step = 1) |>
+  filter(.id < max(.id))
+
+liquor_cv_fit <- liquor_cv |>
+  model(snaive = SNAIVE(sales),
+        ets    = ETS(log(sales)),
+        arima  = ARIMA(log(sales)))
+
+saveRDS(liquor_cv_fit, "results/liquor_cv_fit.rds")
+
+#to reload the above code chunk quicker
+#liquor_cv_fit <- readRDS("results/liquor_cv_fit.rds")
+
+liquor_cv_fc <- liquor_cv_fit |>
+  forecast(h = 1)
+
+liquor_cv_fc |>
+  accuracy(liquor, measures = list(RMSE = RMSE, MAE = MAE)) |>
+  knitr::kable(digits = 2)
+
+
+
