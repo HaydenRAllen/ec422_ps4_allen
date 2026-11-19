@@ -86,3 +86,48 @@ liquor_errs <- liquor_cv_fc |>
 forecast::dm.test(liquor_errs$arima, liquor_errs$ets, h = 1, power = 2)
 forecast::dm.test(liquor_errs$arima, liquor_errs$snaive, h = 1, power = 2)
 
+
+#Part 3
+
+liquor_combo_fc <- liquor_cv_fit |>
+  mutate(combo = (arima + ets) / 2) |>
+  forecast(h = 1)
+
+liquor_combo_fc |>
+  accuracy(liquor, measures = list(RMSE = RMSE, MAE = MAE)) |>
+  knitr::kable(digits = 2)
+
+cor(liquor_errs$arima, liquor_errs$ets)
+  
+#Part 4
+qd_raw <- read_csv("data/fredqd_2026-09.csv", show_col_types = FALSE) |>
+  slice(-(1:2))
+
+
+growth <- function(x) 100 * difference(log(x))
+
+qd <- qd_raw |>
+  mutate(date = as.Date(sasdate, "%m/%d/%Y")) |>
+  transmute(date,
+            gdp    = growth(GDPC1),     # real GDP
+            cons   = growth(PCECC96),   # real consumption
+            inv    = growth(GPDIC1),    # real investment
+            emp    = growth(PAYEMS),    # payroll employment
+            infl   = growth(GDPCTPI),   # GDP price index
+            unrate = difference(UNRATE),     # unemployment rate
+            ffr    = difference(FEDFUNDS),   # federal funds rate
+            gs10   = difference(GS10)) |>    # 10-year Treasury yield
+  filter(date >= as.Date("1960-03-01"), date <= as.Date("2019-12-01"))
+
+y <- qd |> select(-date) |> as.matrix()
+
+nrow(y)
+head(y)
+
+N <- nrow(y)
+origins <- 120:(N - 1)
+actual <- y[121:N, ]
+
+
+
+  
